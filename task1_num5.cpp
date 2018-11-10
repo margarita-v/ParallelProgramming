@@ -23,36 +23,59 @@ const int ERROR_CODE = -1;
 
 int main(int argc, char *argv[]) {
 
-    // Ранг и количество процессов
     int rank, processCount;
+    int vector[N];
+    MPI_Status status;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &processCount);
 
-    if (processCount < MIN_COUNT_OF_PROCESSES) {
-        printf("Количество процессов должно быть не менее %d.\n", MIN_COUNT_OF_PROCESSES);
+    if (processCount < MIN_COUNT_OF_PROCESSES || processCount % 2 == 0) {
+        printf("Количество процессов должно быть нечетным и больше либо равно %d.\n", MIN_COUNT_OF_PROCESSES);
         MPI_Abort(MPI_COMM_WORLD, ERROR_CODE);
     }
 
-    // Инициализация генератора случайных чисел
-    srand(time(NULL) - rank * 2);
-
-    // Формирование случайного вектора длины N
-    int vector[N];
-    printf("\nProcess %d : \t\t", rank);
-    for (int i = 0; i < N; i++)
-        printf("%d ", vector[i] = rand() % N);
-    printf("\n");
-
     if (rank == MASTER_ID) {
-        //todo receive and print result
-    } else if (rank % 2 != 0) {
-        //todo receive value from another process
-        //todo find max and send to MASTER
+        for (int i = 0; i < N; i++) {
+            MPI_Recv(&vector[i], 1, MPI_INT, MPI_ANY_SOURCE, i, MPI_COMM_WORLD, &status);
+        }
+        printf("\nВектор произведений: \t");
+        int max = vector[0];
+        for (int i = 0; i < N; i++) {
+            printf("%d\t", vector[i]);
+            if (vector[i] > max) {
+                max = vector[i];
+            }
+        }
+        printf("\n\n");
+        printf("Максимум: \t\t%d\n", max);
     } else {
-        //todo send value to (rank-1) process
+        // Инициализация генератора случайных чисел
+        srand(time(NULL) - rank * 2);
+
+        // Формирование случайного вектора длины N
+        printf("\nПроцесс %d: \t\t", rank);
+        for (int i = 0; i < N; i++)
+            printf("%d\t", vector[i] = rand() % N);
+        printf("\n");
+
+        if (rank % 2 != 0) {
+            int receivedValue; // Полученное значение другого вектора
+            for (int i = 0; i < N; i++) {
+                MPI_Recv(&receivedValue, 1, MPI_INT, rank + 1, i, MPI_COMM_WORLD, &status);
+                vector[i] *= receivedValue;
+            }
+            for (int i = 0; i < N; i++) {
+                MPI_Send(&vector[i], 1, MPI_INT, 0, i, MPI_COMM_WORLD);
+            }
+        } else {
+            for (int i = 0; i < N; i++) {
+                MPI_Send(&vector[i], 1, MPI_INT, rank - 1, i, MPI_COMM_WORLD);
+            }
+        }
     }
+
     MPI_Finalize();
     return 0;
 }
