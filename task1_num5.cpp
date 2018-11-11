@@ -49,19 +49,24 @@ int main(int argc, char *argv[]) {
     if (rank == MASTER_ID) {
         // Нулевой процесс получает значения поэлементных произведений двух векторов
         // и находит максимум из них
-        for (int i = 0; i < N; i++) {
-            MPI_Recv(&vector[i], 1, MPI_INT, MPI_ANY_SOURCE, i, MPI_COMM_WORLD, &status);
-        }
-        printf("\nВектор произведений: \t");
-        int max = vector[0];
-        for (int i = 0; i < N; i++) {
-            printf("%d\t", vector[i]);
-            if (vector[i] > max) {
-                max = vector[i];
+        int currentProcess = 1; // Номер процесса, от которого будет получено значение
+        for (int j = 0; j < processCount / 2; j++) {
+            for (int i = 0; i < N; i++) {
+                MPI_Recv(&vector[i], 1, MPI_INT, currentProcess, i, MPI_COMM_WORLD, &status);
             }
+            printf("\nДля процессв %d и %d:\n", currentProcess, currentProcess + 1);
+            printf("\nВектор произведений: \t");
+            int max = vector[0];
+            for (int i = 0; i < N; i++) {
+                printf("%d\t", vector[i]);
+                if (vector[i] > max) {
+                    max = vector[i];
+                }
+            }
+            printf("\n\n");
+            printf("Максимум: \t\t%d\n", max);
+            currentProcess += 2;  // Получаем значения только от нечетных процессов
         }
-        printf("\n\n");
-        printf("Максимум: \t\t%d\n", max);
     } else {
         // Инициализация генератора случайных чисел
         srand(time(0) - rank * 2);
