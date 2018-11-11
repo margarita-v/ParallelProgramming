@@ -1,6 +1,5 @@
 #include <iostream>
 #include "mpi.h"
-#include "ctime"
 
 /**
  * УСЛОВИЕ ЗАДАЧИ:
@@ -21,6 +20,17 @@ const int MASTER_ID = 0; // Нулевой процесс
 const int MIN_COUNT_OF_PROCESSES = 3;
 const int ERROR_CODE = -1;
 
+/**
+ * Функция, выполняющая отправку значений вектора процессу с указанным рангом
+ * @param vector вектор, значения которого будут отправлены другому процессу
+ * @param rank ранг процесса, которому будут отправлены значения вектора
+ */
+void send(int vector[], int rank) {
+    for (int i = 0; i < N; i++) {
+        MPI_Send(&vector[i], 1, MPI_INT, rank, i, MPI_COMM_WORLD);
+    }
+}
+
 int main(int argc, char *argv[]) {
 
     int rank, processCount;
@@ -37,6 +47,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (rank == MASTER_ID) {
+        // Нулевой процесс получает значения поэлементных произведений двух векторов
+        // и находит максимум из них
         for (int i = 0; i < N; i++) {
             MPI_Recv(&vector[i], 1, MPI_INT, MPI_ANY_SOURCE, i, MPI_COMM_WORLD, &status);
         }
@@ -52,7 +64,7 @@ int main(int argc, char *argv[]) {
         printf("Максимум: \t\t%d\n", max);
     } else {
         // Инициализация генератора случайных чисел
-        srand(time(NULL) - rank * 2);
+        srand(time(0) - rank * 2);
 
         // Формирование случайного вектора длины N
         printf("\nПроцесс %d: \t\t", rank);
@@ -61,18 +73,17 @@ int main(int argc, char *argv[]) {
         printf("\n");
 
         if (rank % 2 != 0) {
-            int receivedValue; // Полученное значение другого вектора
+            // Нечетные процессы получают значения вектора от четных процессов
+            // и отправляют произведение нулевому процессу
+            int receivedValue;
             for (int i = 0; i < N; i++) {
                 MPI_Recv(&receivedValue, 1, MPI_INT, rank + 1, i, MPI_COMM_WORLD, &status);
                 vector[i] *= receivedValue;
             }
-            for (int i = 0; i < N; i++) {
-                MPI_Send(&vector[i], 1, MPI_INT, 0, i, MPI_COMM_WORLD);
-            }
+            send(vector, 0);
         } else {
-            for (int i = 0; i < N; i++) {
-                MPI_Send(&vector[i], 1, MPI_INT, rank - 1, i, MPI_COMM_WORLD);
-            }
+            // Четные процессы отправляют значения вектора парному процессу
+            send(vector, rank - 1);
         }
     }
 
