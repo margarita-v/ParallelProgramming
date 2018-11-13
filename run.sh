@@ -44,7 +44,8 @@ else
     if ! check_argument "$TASK_NUMBER" || ! check_argument "$NUMBER_OF_PROCESSES"; then
         print_error
     else
-        #todo run task
-        echo task "$TASK_NUMBER" num "$NUMBER_OF_PROCESSES"
+        OUT_FILE_NAME=out/task"$TASK_NUMBER"
+        mpic++ -o "$OUT_FILE_NAME" ./task1_num5.cpp
+        mpirun -np "$NUMBER_OF_PROCESSES" ./"$OUT_FILE_NAME"
     fi
 fi
