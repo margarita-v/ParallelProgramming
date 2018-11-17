@@ -45,7 +45,7 @@ else
         print_error
     else
         OUT_FILE_NAME=out/task"$TASK_NUMBER"
-        mpic++ -o "$OUT_FILE_NAME" ./task1_num5.cpp
+        mpic++ -o "$OUT_FILE_NAME" ./task1/task1_num5.cpp
         mpirun -np "$NUMBER_OF_PROCESSES" ./"$OUT_FILE_NAME"
     fi
 fi
