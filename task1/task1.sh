@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ../run-config.sh --source-only
+. ../config-run.sh --source-only
 
 DEFAULT_NUMBER_OF_PROCESSES=3
 

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+: '
+    Config file for easy call task solve
+'
+
 NUMBER_EXP="^[1-9]+([0-9])?$"
 
 run() {
