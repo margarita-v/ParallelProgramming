@@ -4,10 +4,11 @@
     Main script for all tasks
 '
 
+. utils.sh --source-only
+
 USAGE="Usage: run -t <task-number> -p <number-of-processes> [--help]"
 INFO="Run task with defined number of processes"
 ERROR="Error: Invalid parameters!"
-NUMBER_EXP="^[1-9]+([0-9])?$"
 
 print_info() {
 	echo
@@ -21,24 +22,6 @@ print_error() {
     echo ${ERROR}
     print_info
     exit 1
-}
-
-check_argument() {
-    : '
-        Function which is checking if the argument is not null and is number
-    '
-    if [[ -z $1 ]] || ! [[ $1 =~ $NUMBER_EXP ]]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-get_task_filename() {
-    : '
-        Function for searching a task filename by task number
-    '
-    find $1 -name "*.cpp" 2>/dev/null
 }
 
 # Checking for number of arguments
@@ -63,7 +46,7 @@ else
         OUT_FILE_NAME=out/${TASK_FOLDER_NAME}
 
         TASK_FILENAME=`get_task_filename ${TASK_FOLDER_NAME}`
-        if [[ $? != 0 ]]; then
+        if [[ $? != 0 || -z ${TASK_FILENAME} ]]; then
             print_error
         else
             mpic++ -o ${OUT_FILE_NAME} ${TASK_FILENAME}

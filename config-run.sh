@@ -16,7 +16,8 @@ run() {
 
     RUN_COMMAND="./run.sh -t ${TASK_NUMBER} -p "
 
-    if [[ -z ${CURRENT_NUMBER_OF_PROCESSES} ]] || ! [[ ${CURRENT_NUMBER_OF_PROCESSES} =~ $NUMBER_EXP ]]
+    if [[ -z ${CURRENT_NUMBER_OF_PROCESSES} ]] || \
+        ! [[ ${CURRENT_NUMBER_OF_PROCESSES} =~ $NUMBER_EXP ]]
     then
         RUN_COMMAND+=${DEFAULT_NUMBER_OF_PROCESSES}
     else
