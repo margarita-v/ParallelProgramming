@@ -20,16 +20,7 @@ const int MASTER_ID = 0; // Нулевой процесс
 const int MIN_COUNT_OF_PROCESSES = 3;
 const int ERROR_CODE = -1;
 
-/**
- * Функция, выполняющая отправку значений вектора процессу с указанным рангом
- * @param vector вектор, значения которого будут отправлены другому процессу
- * @param rank ранг процесса, которому будут отправлены значения вектора
- */
-void send(int vector[], int rank) {
-    for (int i = 0; i < N; i++) {
-        MPI_Send(&vector[i], 1, MPI_INT, rank, i, MPI_COMM_WORLD);
-    }
-}
+void send(int vector[], int rank);
 
 int main(int argc, char *argv[]) {
 
@@ -94,4 +85,15 @@ int main(int argc, char *argv[]) {
 
     MPI_Finalize();
     return 0;
+}
+
+/**
+ * Функция, выполняющая отправку значений вектора процессу с указанным рангом
+ * @param vector вектор, значения которого будут отправлены другому процессу
+ * @param rank ранг процесса, которому будут отправлены значения вектора
+ */
+void send(int vector[], int rank) {
+    for (int i = 0; i < N; i++) {
+        MPI_Send(&vector[i], 1, MPI_INT, rank, i, MPI_COMM_WORLD);
+    }
 }
