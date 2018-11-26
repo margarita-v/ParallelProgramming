@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
         // Вычисление значений
         sendbuf = calculateSeriesValues(count, recbufdots, eps);
 
-        // Отправляем значения и одновременно получаем их
+        // Отправляем значения
         MPI_Gather(sendbuf, count, MPI_DOUBLE, recvbuf, count, MPI_DOUBLE, MASTER_ID, MPI_COMM_WORLD);
 
         // Печать результатов
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
         recbufdots = createDoubleArray(count);
         recvbuf = createDoubleArray(count);
 
-        // Получение значений точек значения
+        // Получение значений точек
         MPI_Scatter(sendbufdots, count, MPI_DOUBLE, recbufdots, count, MPI_DOUBLE, MASTER_ID, MPI_COMM_WORLD);
 
         // Вычисление значений
