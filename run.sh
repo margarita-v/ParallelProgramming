@@ -49,7 +49,7 @@ else
         if [[ $? != 0 || -z ${TASK_FILENAME} ]]; then
             print_error
         else
-            mpic++ -o ${OUT_FILE_NAME} ${TASK_FILENAME}
+            mpic++ -o ${OUT_FILE_NAME} --std=c++11 ${TASK_FILENAME}
             mpirun -np ${NUMBER_OF_PROCESSES} ./${OUT_FILE_NAME}
         fi
     fi
