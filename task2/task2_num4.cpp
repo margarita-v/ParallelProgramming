@@ -30,9 +30,8 @@ double *createDoubleArray(int size);
 double *calculateSeriesValues(int count, double *values, double eps);
 
 template<typename ...Doubles>
-void print(Doubles... values)
-{
-    double args[] = { values... };
+void print(Doubles... values) {
+    double args[] = {values...};
     for (int i = 0; i < sizeof(args) / sizeof(double); i++) {
         printf(RESULT_DOUBLE_VALUE_FORMAT, args[i]);
     }
@@ -95,7 +94,7 @@ int main(int argc, char *argv[]) {
         // Печать результатов
         printf("Dot\t\tExact value\tFound value\n");
         for (int i = 0; i < recvCount; i++) {
-            double currentValue =  sendbufdots[i];
+            double currentValue = sendbufdots[i];
             print(currentValue, fExact(currentValue), recvbuf[i]);
         }
 
@@ -103,7 +102,7 @@ int main(int argc, char *argv[]) {
         // поэтому некоторые процессы будут выполнять большее количество вычислений.
         // Процесс-мастер будет выполнять оставшиеся вычисления
         for (int i = recvCount; i < n; i++) {
-            double currentValue =  sendbufdots[i];
+            double currentValue = sendbufdots[i];
             print(currentValue, fExact(currentValue), f(currentValue, eps));
         }
     } else {
@@ -149,7 +148,7 @@ double *createDoubleArray(int size) {
  * @return массив значений функции в заданных точках с заданной точностью
  */
 double *calculateSeriesValues(int count, double *values, double eps) {
-    double  *result = createDoubleArray(count);
+    double *result = createDoubleArray(count);
     for (int i = 0; i < count; i++)
         result[i] = f(values[i], eps);
     return result;
@@ -159,23 +158,24 @@ double *calculateSeriesValues(int count, double *values, double eps) {
 //region Functions for task solution
 /**
  * Функция, вычисляющая значение функции в точке с заданной точностью
+ *
+ * arctg(x) = x - x^3/3 + x^5/5 - x^7/7 + x^9/9...
+ *
  * @param x точка, в которой будет вычислено значение функции
  * @param eps точность вычислений
  * @return значение функции в точке с заданной точностью
  */
 double f(double x, double eps) {
-    //todo
-    double
-            powX = -x * x,
-            pred = x,
-            result = pred - x * x / 2;
-
-    for (int pos = 3; fabs(pred - result) > eps; pos++) {
-        powX *= -x;
-        pred = result;
-        result += powX / pos;
+    float xCurrent = x;
+    float sum = 0;
+    int i = 1, j = 1;
+    while (abs(xCurrent) > eps) {
+        sum += xCurrent;
+        i += 2;
+        j = -j;
+        xCurrent = j * pow(x, i) / i;
     }
-    return result;
+    return sum;
 }
 
 /**
