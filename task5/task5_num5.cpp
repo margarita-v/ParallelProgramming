@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     // Генерация и печать массива для текущего процесса
     srand(time(0) + rank * 10);
     for (int i = 0; i < N; i++) {
-        arr[i] = -N / 3 + rand() % (3 * N);
+        arr[i] = -N / 2 + rand() % (2 * N);
     }
 
     int *recvbuf = new int[N * processCount];
@@ -71,9 +71,15 @@ int main(int argc, char *argv[]) {
  */
 void findPositiveMult(int *in, int *positiveMult, int *len, MPI_Datatype *datatype) {
     for (int i = 0; i < *len; i++) {
-        if (in[i] > 0 && positiveMult[i] > 0) {
-            positiveMult[i] *= in[i];
-        } else {
+        if (in[i] > 0) {
+            // Находим произведение положительных элементов, игнорируя отрицательные числа и 0
+            if (positiveMult[i] > 0) {
+                positiveMult[i] *= in[i];
+            } else {
+                positiveMult[i] = in[i];
+            }
+        } else if (positiveMult[i] < 0) {
+            // Если для текущей позиции не найдено положительных элементов, возвращаем 0
             positiveMult[i] = 0;
         }
     }
