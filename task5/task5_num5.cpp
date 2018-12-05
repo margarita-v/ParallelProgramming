@@ -15,6 +15,8 @@ using namespace std;
  * Найти произведение положительных.
  */
 
+const int MASTER_ID = 0; // Нулевой процесс
+
 void findPositiveMult(int *in, int *max, int *len, MPI_Datatype *datatype);
 
 int main(int argc, char *argv[]) {
@@ -28,12 +30,21 @@ int main(int argc, char *argv[]) {
 
     // Генерация и печать массива для текущего процесса
     srand(time(0) + rank * 10);
-    cout << "Process " << rank << ":\t";
     for (int i = 0; i < N; i++) {
-        arr[i] = -N / 2 + rand() % (2 * N);
-        cout << arr[i] << "\t";
+        arr[i] = -N / 3 + rand() % (3 * N);
     }
-    cout << endl;
+
+    int *recvbuf = new int[N * processCount];
+    MPI_Gather(arr, N, MPI_INT, recvbuf, N, MPI_INT, MASTER_ID, MPI_COMM_WORLD);
+    if (rank == MASTER_ID) {
+        for (int i = 0; i < processCount; i++) {
+            cout << "Process " << i << ":\t";
+            for (int j = 0; j < N; j++) {
+                cout << recvbuf[N * i + j] << "\t";
+            }
+            cout << endl;
+        }
+    }
 
     MPI_Op operation;
     MPI_Op_create((MPI_User_function *) findPositiveMult, 0, &operation);
