@@ -26,14 +26,17 @@ int *createIntArray(int size);
 int sum(int *a, int *b, int len);
 
 int main(int argc, char *argv[]) {
+
     int processCount, rank, predRank, nextRank, max, current;
-    int dims[dimension], periods[dimension], newCoords[dimension];
+    int matrixSize = processCount * processCount;
 
     MPI_Comm newComm;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &processCount);
+
+    int dims[dimension], periods[dimension], newCoords[dimension];
 
     for (int i = 0; i < dimension; i++) {
         dims[i] = 0;
@@ -52,36 +55,58 @@ int main(int argc, char *argv[]) {
         A[i] = rand() % 10;
         B[i] = rand() % 10;
     }
+
+    //Нулевой процесс выводит сгенерированные матрицы
+    int *recvbufA = createIntArray(matrixSize);
+    int *recvbufB = createIntArray(matrixSize);
+
+    MPI_Gather(A, processCount, MPI_INT, recvbufA, processCount, MPI_INT, MASTER_ID, newComm);
+    MPI_Gather(B, processCount, MPI_INT, recvbufB, processCount, MPI_INT, MASTER_ID, newComm);
+
     if (rank == MASTER_ID) {
-        cout << "A[" << rank << "] = [ ";
+        cout << "A" << endl;
         for (int i = 0; i < processCount; i++) {
-            cout << A[i] << " ";
+            int sumstr = 0;
+            for (int j = 0; j < processCount; j++) {
+                int currentElement = recvbufA[processCount * i + j];
+                cout << currentElement << " ";
+                sumstr += currentElement;
+            }
+            cout << "| sumstr = " << sumstr << endl;
         }
-        cout << "]\nB[" << rank << "] = [ ";
+        cout << "\nB" << endl;
         for (int i = 0; i < processCount; i++) {
-            cout << B[i] << " ";
+            int sumstr = 0;
+            for (int j = 0; j < processCount; j++) {
+                int currentElement = recvbufB[processCount * i + j];
+                cout << currentElement << " ";
+                sumstr += currentElement;
+            }
+            cout << "| sumstr = " << sumstr << endl;
         }
     }
 
     current = sum(A, B, processCount);
     max = current;
-    if (rank == MASTER_ID) {
-        cout << "]\nResults:\n\tsum(A[" << rank << ",k] + B[k,0]) = " << current << endl;
-    }
-    for (int j = 1; j < processCount; j++) {
+    //if (rank == MASTER_ID) {
+        //cout << "\nResults:\n\tsum(A[" << rank << ",j] + B[0,j]) = " << current << endl;
+    //}
+
+    cout << "\nResults:\n";
+    for (int k = 0; k < processCount; k++) {
         MPI_Status status;
-        MPI_Sendrecv_replace(B, processCount, MPI_INT, nextRank, 2, predRank, 2, newComm, &status);
+        MPI_Sendrecv_replace(B, processCount, MPI_INT, nextRank, 1, predRank, 1, newComm, &status);
         current = sum(A, B, processCount);
         if (current > max) {
             max = current;
         }
-        if (rank == MASTER_ID) {
-            cout << "\tsum(A[" << rank << ",k] + B[k," << j << "]) = " << current << endl;
-        }
+        //if (rank == MASTER_ID) {
+            cout << "\tsum(A[" << rank << ",j] + B[" << k << ",j]) = " << current << endl;
+        //}
     }
-    if (rank == MASTER_ID) {
+    //if (rank == MASTER_ID) {
         cout << "Maximum = " << max << endl;
-    }
+    //}
 
     free(A);
     free(B);
