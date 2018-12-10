@@ -56,57 +56,37 @@ int main(int argc, char *argv[]) {
         B[i] = rand() % 10;
     }
 
-    //Нулевой процесс выводит сгенерированные матрицы
-    int *recvbufA = createIntArray(matrixSize);
-    int *recvbufB = createIntArray(matrixSize);
-
-    MPI_Gather(A, processCount, MPI_INT, recvbufA, processCount, MPI_INT, MASTER_ID, newComm);
-    MPI_Gather(B, processCount, MPI_INT, recvbufB, processCount, MPI_INT, MASTER_ID, newComm);
-
-    if (rank == MASTER_ID) {
-        cout << "A" << endl;
-        for (int i = 0; i < processCount; i++) {
-            int sumstr = 0;
-            for (int j = 0; j < processCount; j++) {
-                int currentElement = recvbufA[processCount * i + j];
-                cout << currentElement << " ";
-                sumstr += currentElement;
-            }
-            cout << "| sumstr = " << sumstr << endl;
-        }
-        cout << "\nB" << endl;
-        for (int i = 0; i < processCount; i++) {
-            int sumstr = 0;
-            for (int j = 0; j < processCount; j++) {
-                int currentElement = recvbufB[processCount * i + j];
-                cout << currentElement << " ";
-                sumstr += currentElement;
-            }
-            cout << "| sumstr = " << sumstr << endl;
-        }
+    string message = "row\tA[" + to_string(rank) + "] = [ ";
+    int sumstr = 0;
+    for (int i = 0; i < processCount; i++) {
+        int currentElement = A[i];
+        message += to_string(currentElement) + " ";
+        sumstr += currentElement;
+    }
+    message += "], sumrow = " + to_string(sumstr) + "\ncolumn\tB[" + to_string(rank) + "] = [ ";
+    sumstr = 0;
+    for (int i = 0; i < processCount; i++) {
+        int currentElement = B[i];
+        message += to_string(currentElement) + " ";
+        sumstr += currentElement;
     }
 
     current = sum(A, B, processCount);
     max = current;
-    //if (rank == MASTER_ID) {
-        //cout << "\nResults:\n\tsum(A[" << rank << ",j] + B[0,j]) = " << current << endl;
-    //}
+    message += "], sumcol = " + to_string(sumstr) +
+               "\nResults:\n\tsum(A[" + to_string(rank) + ",j] + B[j,0]) = " + to_string(current) + "\n";
 
-    cout << "\nResults:\n";
-    for (int k = 0; k < processCount; k++) {
+    for (int k = 1; k < processCount; k++) {
         MPI_Status status;
         MPI_Sendrecv_replace(B, processCount, MPI_INT, nextRank, 1, predRank, 1, newComm, &status);
         current = sum(A, B, processCount);
         if (current > max) {
             max = current;
         }
-        //if (rank == MASTER_ID) {
-            cout << "\tsum(A[" << rank << ",j] + B[" << k << ",j]) = " << current << endl;
-        //}
+        message += "\tsum(A[" + to_string(rank) + ",j] + B[j," + to_string(k) + "]) = " + to_string(current) + "\n";
     }
-    //if (rank == MASTER_ID) {
-        cout << "Maximum = " << max << endl;
-    //}
+    message += "Maximum = ";
+    printf("%s%d\n", message.c_str(), max);
 
     free(A);
     free(B);
