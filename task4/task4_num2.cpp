@@ -21,9 +21,16 @@ using namespace std;
 
 const int MASTER_ID = 0; // Нулевой процесс
 
-int *createIntArray(int size);
+const string MATRIX_A = "A";
+const string MATRIX_B = "B";
 
 int sum(int *a, int *b, int len);
+
+int *createIntArray(int size);
+
+string arrayToString(int *array, int size, string name, int rank, bool isRow);
+
+string sumToString(int rank, int index, int sum);
 
 int main(int argc, char *argv[]) {
 
@@ -56,25 +63,12 @@ int main(int argc, char *argv[]) {
         B[i] = rand() % 10;
     }
 
-    string message = "row\tA[" + to_string(rank) + "] = [ ";
-    int sumstr = 0;
-    for (int i = 0; i < processCount; i++) {
-        int currentElement = A[i];
-        message += to_string(currentElement) + " ";
-        sumstr += currentElement;
-    }
-    message += "], sumrow = " + to_string(sumstr) + "\ncolumn\tB[" + to_string(rank) + "] = [ ";
-    sumstr = 0;
-    for (int i = 0; i < processCount; i++) {
-        int currentElement = B[i];
-        message += to_string(currentElement) + " ";
-        sumstr += currentElement;
-    }
+    string message = arrayToString(A, processCount, MATRIX_A, rank, true) +
+                     arrayToString(B, processCount, MATRIX_B, rank, false);
 
     current = sum(A, B, processCount);
     max = current;
-    message += "], sumcol = " + to_string(sumstr) +
-               "\nResults:\n\tsum(A[" + to_string(rank) + ",j] + B[j,0]) = " + to_string(current) + "\n";
+    message += "Results:\n" + sumToString(rank, 0, current);
 
     for (int k = 1; k < processCount; k++) {
         MPI_Status status;
@@ -83,7 +77,7 @@ int main(int argc, char *argv[]) {
         if (current > max) {
             max = current;
         }
-        message += "\tsum(A[" + to_string(rank) + ",j] + B[j," + to_string(k) + "]) = " + to_string(current) + "\n";
+        message += sumToString(rank, k, current);
     }
     message += "Maximum = ";
     cout << message << max << endl;
@@ -96,6 +90,17 @@ int main(int argc, char *argv[]) {
 }
 
 /**
+ * Функция, вычисляющая сумму элементов двух массивов
+ */
+int sum(int *a, int *b, int len) {
+    int sum = 0;
+    for (int i = 0; i < len; i++) {
+        sum += a[i] + b[i];
+    }
+    return sum;
+}
+
+/**
  * Функция, создающая массив целых чисел заданного размера
  * @param size размер созданного массива
  * @return массив целых чисел
@@ -105,12 +110,35 @@ int *createIntArray(int size) {
 }
 
 /**
- * Функция, вычисляющая сумму элементов двух массивов
+ * Функция, возвращающая строковое представление массива с дополнительной информацией для печати
+ * @param array массив, который будет напечатан
+ * @param size размер массива
+ * @param name имя массива
+ * @param rank ранг текущего процесса
+ * @param isRow флаг, значение которого равно true, если данный массив является строкой матрицей
+ * @return строковое представление массива с дополнительной информацией для печати
  */
-int sum(int *a, int *b, int len) {
+string arrayToString(int *array, int size, string name, int rank, bool isRow) {
+    string result = isRow ? "row\t" : "column\t";
+    result += name + "[" + to_string(rank) + "] = [ ";
     int sum = 0;
-    for (int i = 0; i < len; i++) {
-        sum += a[i] + b[i];
+    for (int i = 0; i < size; i++) {
+        int currentElement = array[i];
+        result += to_string(currentElement) + " ";
+        sum += currentElement;
     }
-    return sum;
+    string arrayType = isRow ? "sumrow" : "sumcol";
+    return result += "], " + arrayType + " = " + to_string(sum) + "\n";
+}
+
+/**
+ * Функция, возвращающая строку для печати суммы строки и столбца двух матриц
+ * @param rank ранг текущего процесса
+ * @param index индекс столбца матрицы, который получил текущий процесс
+ * @param sum значений суммы
+ * @return строка для печати суммы строки и столбца двух матриц
+ */
+string sumToString(int rank, int index, int sum) {
+    return "\tsum(" + MATRIX_A + "[" + to_string(rank) + ",j] + " +
+           MATRIX_B + "[j," + to_string(index) + "]) = " + to_string(sum) + "\n";
 }
